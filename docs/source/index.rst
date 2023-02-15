@@ -1,6 +1,9 @@
 CONAn - User Guide
 ===================================
-
+.. figure:: ../pictures/conan_logo.png
+   :width: 90%
+   :class: align-center
+   
 .. note::
 
    This project is under active development.
