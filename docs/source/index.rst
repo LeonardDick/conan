@@ -1,4 +1,4 @@
-.. figure:: pictures/conan_logo.png
+.. figure:: pictures/CONAN_logo.png
    :width: 90%
    :class: align-center
    
