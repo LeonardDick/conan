@@ -31,31 +31,31 @@ For the analysis options implemented, the following parameters are potentially n
    * - H
      - 1.008
      - 1.20
-     - 0.25
+     - 0.31
    * - C
      - 12.011
      - 1.70
-     - 0.70
+     - 0.76
    * - N
      - 14.007
      - 1.55
-     - 0.65
+     - 0.71
    * - O
      - 15.999
      - 1.52
-     - 0.60
+     - 0.66
    * - F
      - 18.998
      - 1.47
-     - 0.50
+     - 0.57
    * - P
      - 30.974
      - 1.80
-     - 1.00
+     - 1.07
    * - S
      - 32.065
      - 1.80
-     - 1.00
+     - 1.05
 
 
 .. note::
@@ -65,6 +65,7 @@ For the analysis options implemented, the following parameters are potentially n
 
 
 .. [1] A. Bondi, van der Waals Volumes and Radii, J. Phys. Chem. 68 (3) (1964) 441-451.
-       DOI: https://doi.org/10.1021/j100785a001
-.. [2] Zitat einfügen!
+       DOI: doi.org/10.1021/j100785a001
+.. [2] B. Cordero, V. Gómez, A. Platero-Prats, M. Revés, J. Echeverría, E. Cremades, F. Barragán, S. Alvarez, Covalent radii revisited, Journal of the Chemical Society. Dalton Transactions (2008), 2832–2838
+       DOI: doi.org/10.1039/b801115j
 
