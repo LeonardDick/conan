@@ -2,8 +2,9 @@ Carbon structures
 =================
 
 This mode is automatically started, when the '-c' flag is given while starting the program.
-.. code-block::
-    
+
+.. code-block:: none
+
     $ python3 CONAn.py -c
 
 The mode is used to build new carbon structures from scratch and print the xyz structures to a file.

@@ -2,8 +2,9 @@ General Information
 ===================
 
 The trajectory analysis tool is automatically called, when a trajectory is loaded. Use the '-f' flag to define which trajectory to load.
-.. code-block::
-    
+
+.. code-block:: none
+
     $ python3 CONAn.py -f trajectory.xyz
 
 .. note::
