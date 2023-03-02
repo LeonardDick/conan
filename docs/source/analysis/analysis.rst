@@ -5,7 +5,7 @@ The trajectory analysis tool is automatically called, when a trajectory is loade
 
 .. code-block:: none
 
-    $ python3 CONAn.py -f trajectory.xyz
+    $ python3.8 CONAn.py -f trajectory.xyz
 
 .. note::
     The trajectory has to either xyz or pdb format. If the trajectory is in xyz format, the user is prompted to enter the simulation box dimensions, as they are needed for some analysis.

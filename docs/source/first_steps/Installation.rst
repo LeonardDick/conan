@@ -5,7 +5,7 @@ To use CONAn, simply clone the public repository to your machine using using Git
 
 .. code-block:: none
 
-   $ git clone ...
+   $ git clone --recursive https://github.com/kirchners-manta/conan.git
 
 The code is written in Python. Multiple libraries need to be installed to run the code, which are listed in the requirements.txt file. 
 For the installation using pip, run the following command:
