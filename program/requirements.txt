@@ -1,0 +1,5 @@
+matplotlib==3.5.3
+numpy
+pandas==1.4.4
+prettytable
+scipy==1.9.3
