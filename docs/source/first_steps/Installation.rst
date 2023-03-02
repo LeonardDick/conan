@@ -3,7 +3,9 @@ Installation
 
 To use CONAn, simply clone the public repository to your machine using using GitHub.
 
-    $ git clone ...
+```
+$ git clone ...
+```
 
 The code is written in Python. Multiple libraries need to be installed to run the code, which are listed in the requirements.txt file. 
 For the installation using pip, run the following command:
