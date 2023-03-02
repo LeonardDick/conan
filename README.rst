@@ -1,9 +1,8 @@
-Template for the Read the Docs tutorial
+CONAN - Program and Manual
 =======================================
 
-This GitHub template includes fictional Python library
-with some basic Sphinx docs.
+This GitHub repository contains the python modules of CONAN and the documentation for the manual webpage
 
-Read the tutorial here:
+Read the manual here:
 
 https://con-an.readthedocs.io
