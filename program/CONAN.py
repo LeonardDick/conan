@@ -20,15 +20,15 @@ if os.path.exists('conan.log'):
     os.rename('conan.log', 'conan.log.old')
 
 #LOGO
-ddict.printLog_yellow('##########################################')
-ddict.printLog_yellow('##                                      ##')
-ddict.printLog_yellow('##   #####  #####  #   #  #####         ##')
-ddict.printLog_yellow('##   #      #   #  ##  #  #   #         ##')
-ddict.printLog_yellow('##   #      #   #  # # #  #####  ####   ##')
-ddict.printLog_yellow('##   #      #   #  #  ##  #   #  #  #   ##')
-ddict.printLog_yellow('##   #####  #####  #   #  #   #  #  #   ##')
-ddict.printLog_yellow('##                                      ##')
-ddict.printLog_yellow('##########################################')
+ddict.printLog_yellow('###########################################')
+ddict.printLog_yellow('##                                       ##')
+ddict.printLog_yellow('##   #####  #####  #   #  #####  #   #   ##')
+ddict.printLog_yellow('##   #      #   #  ##  #  #   #  ##  #   ##')
+ddict.printLog_yellow('##   #      #   #  # # #  #####  # # #   ##')
+ddict.printLog_yellow('##   #      #   #  #  ##  #   #  #  ##   ##')
+ddict.printLog_yellow('##   #####  #####  #   #  #   #  #   #   ##')
+ddict.printLog_yellow('##                                       ##')
+ddict.printLog_yellow('###########################################')
 ddict.printLog('')
 
 #INFO
