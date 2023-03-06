@@ -2,7 +2,7 @@
 
 # -- Project information
 
-project = 'CONAn'
+project = 'CONAN'
 copyright = '2022, Leonard Dick'
 author = 'Leonard Dick'
 
