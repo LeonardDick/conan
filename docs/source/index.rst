@@ -15,11 +15,12 @@ The program has the following features:
 
 * Generate structures like carbon walls, carbon nanotubes (CNT), pore structures and their boron nitride analogues. All carbons can be doped  with graphitic nitrogen.
 * Set up simulation boxes with a bulk liquid input file and carbon structures of choice.
-* Identify and characterize carbon structures found in a MD trajectory.
-* Calculate the radial density inside a CNT.
-* Calculate the accessible volume of a CNT.
+* Identify and characterize solid structures found in a MD trajectory.
+* Calculate the radial density inside a CNT/pore.
+* Calculate the accessible volume of a CNT/pore.
 * Calculate the axial density along a simulation box.
-* Produce xyz files of a frame/pore/CNT (either filled with liquid or empty) from the trajectory.
+* Cut any frame from a trajectory
+* Cut a pore/CNT from any given frame, either filled with liquid or empty.
 
 Additionally the program has a molecule identifier implemented, which makes it possible to perform all analysis for the individual kind of molecules present in the system.
 
