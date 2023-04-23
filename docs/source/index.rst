@@ -10,10 +10,10 @@
 CONAN - User Guide
 ===================================
 
-**CONAN** is a tool to generate carbon structures, set up MD simulation boxes and analyze MD trajectories composed of a liquid and carbon structures.
+**CONAN** is a tool to generate carbon and boron nitride structures, set up MD simulation boxes and analyze MD trajectories composed of a liquid in confinement.
 The program has the following features:
 
-* Generate carbon structures like carbon walls, carbon nanotubes (CNT) or pore structures.
+* Generate structures like carbon walls, carbon nanotubes (CNT), pore structures and their boron nitride analogues. All carbons can be doped  with graphitic nitrogen.
 * Set up simulation boxes with a bulk liquid input file and carbon structures of choice.
 * Identify and characterize carbon structures found in a MD trajectory.
 * Calculate the radial density inside a CNT.
