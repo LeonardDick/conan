@@ -44,7 +44,7 @@ The structures are built by using the following default parameters:
   The positions of all nitrogen and boron atoms are switched in consecutive layers, resulting in an ABA stacking.
 
 All set values can be freely adjusted by the user.
-All relevant quantities are printed to the terminal and the ``conan.log`` file, the xyz structures are written to a seperate file.
+All relevant quantities are printed to the terminal and the ``conan.log`` file, the xyz structures are written to a seperate file in a ``structures`` folder.
 
 
 

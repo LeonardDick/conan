@@ -20,8 +20,8 @@ With the simulation box mode activated, the user will be prompted to enter a str
      - Liquid bulk
      - bulk.xyz
    * - W
-     - Carbon Wall
-     - carbon_wall.xyz
+     - Wall structure
+     - wall.xyz
    * - P
      - Pore structure
      - pore.xyz
@@ -33,7 +33,7 @@ With the simulation box mode activated, the user will be prompted to enter a str
      - pore_right.xyz
 
 The 'L' and 'R' keywords are needed, if the pore structure is not symmetric and therefore two different pores want to be introduced.
-The provided xyz structures have to be in the folder where the program is executed, or in the cbuild folder generated beforehand. 
+The provided xyz structures have to be in the folder where the program is executed, or in the ``structures`` folder generated beforehand. 
 The final simulation box will be saved as simbox.xyz in the present folder.
 
 
@@ -41,7 +41,7 @@ The final simulation box will be saved as simbox.xyz in the present folder.
    :width: 60%
    :class: align-center
 
-    Simulation box of an ionic liquid between carbon walls and a pore, generated with the simulation box generator.
+    Simulation box of an ionic liquid between carbon walls and a pore, built with the simulation box generator.
    
 
 
