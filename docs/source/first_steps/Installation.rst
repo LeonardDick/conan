@@ -12,19 +12,14 @@ For the installation using pip, run the following command:
 
 .. code-block:: none
 
-   $ pip install -r requirements.txt
+   $ pip3 install -r requirements.txt
 
-Or manually install all packages using the following command:
-
-.. code-block:: none
-   
-   $ pip install pandas numpy scipy prettytable matplotlib
 
 For the installation in a new conda environment, run the following commands:
 
 .. code-block:: none
     
-   $ conda create -n conan python=3.8
+   $ conda create -n conan python=3.10
    $ conda config --env --add channels conda-forge
    $ conda install -n conan --file requirements.txt 
    $ conda activate conan
@@ -33,7 +28,7 @@ Now the code is ready to be used. To start the program, simply run the following
 
 .. code-block:: none
 
-   $ python3.8 CONAn.py
+   $ python3.10 CONAn.py
     
 The code works by asking questions to the user and prints the results to the terminal. 
 A log file will be written called ``conan.log``, which contains everything that is printed to the terminal. 
