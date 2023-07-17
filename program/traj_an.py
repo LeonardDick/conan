@@ -21,8 +21,8 @@ args = ddict.read_commandline()
 def analysis_opt(id_frame, CNT_centers, box_size, tuberadii, min_z_pore, max_z_pore, length_pore) -> None:
 
     # General analysis options (Is the whole trajectory necessary or just the first frame?).
-    ddict.printLog('(1) Produce xyz files of the simulation box or pore structures in the chosen frame.')
-    ddict.printLog('(2) Analyze the trajectory')
+    ddict.printLog('(1) Produce xyz files of the simulation box or pore structure.')
+    ddict.printLog('(2) Analyze the trajectory.')
     choice = ddict.get_input('Picture or analysis mode?: ', args)
     ddict.printLog('')
     if choice == '1':
