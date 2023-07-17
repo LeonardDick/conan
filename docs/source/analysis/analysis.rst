@@ -8,15 +8,18 @@ The trajectory analysis tool is automatically called, when a trajectory is loade
     $ python3.10 CONAn.py -f trajectory.xyz
 
 .. note::
-    The trajectory has to either xyz, pdb of LAMMPS (.lammpstrj or .lmp) format. If the trajectory is in xyz format, the user is prompted to enter the simulation box dimensions, as they are needed for some analysis.
+    The trajectory has to either xyz, pdb or LAMMPS (.lammpstrj or .lmp) format. 
+    If the trajectory is in xyz format, the user is prompted to enter the simulation box dimensions, as they are needed for some analyses.
     In the case of a pdb and LAMMPS file, the box dimensions are read directly from the file.
 
-As a first step, the program analyzes the trajectory regarding its size, number of frames, number of atoms in the system and more.
-The user is then prompted to select a frame which is to be used to identify all rigid carbon structures in the system.
-The trajectory analysis tool is divided into two main parts, the picture mode and the analysis mode, which includes all the analysis functions performed on the trajectory.
+As a first step, the program identifies all rigid structures in the trajectory and characterizes them. 
+The identification of solid structures is achieved by comparing the fist two frames of a given trajectory and identify all frozen atoms.
+The structures therefore have to stay frozen over the course of the simulation
+The trajectory analysis part is divided into two main sections, the picture mode and the analysis mode, which includes all the analysis functions implemented.
 All modi will be discussed in further detail in the following sections.
 
 For the analysis options implemented, the following parameters are potentially needed:
+
 * element masses
 * van der Waals [1]_ or covalent [2]_ radii of the elements
 * number of increments (set by the user)
@@ -62,7 +65,7 @@ For the analysis options implemented, the following parameters are potentially n
 .. note::
 
         The user is prompted to choose between the van der Waals radii and covalent radii of the elements.
-        For all analysis functions, the listed atomic masses were used.
+        For all analysis functions, the listed atomic masses are used.
 
 
 .. [1] A. Bondi, van der Waals Volumes and Radii, J. Phys. Chem. 68 (3) (1964) 441-451.

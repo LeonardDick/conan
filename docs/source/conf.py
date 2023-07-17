@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'CONAN'
-copyright = '2023, Leonard Dick'
+copyright = '2023, Kirchner Group'
 author = 'Leonard Dick'
 
 release = '1.0.0'

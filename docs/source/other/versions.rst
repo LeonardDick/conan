@@ -1,10 +1,6 @@
 Versions
 ========
 
-.. note:: 
-  
-  The complete versions is not yet released!
 
-Beta versions
--------------
-Version 1.0 is currently worked on in the `master` branch.
+Version 1.0
+  -Uploaded to the `master` branch in the GitHub repository.
