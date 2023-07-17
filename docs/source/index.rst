@@ -10,21 +10,20 @@
 CONAN - User Guide
 ===================================
 
-**CONAN** is a tool to generate carbon and boron nitride structures, set up MD simulation boxes and analyze MD trajectories composed of a liquid in confinement.
+**CONAN** is a tool to generate carbon and boron nitride structures, set up MD simulation boxes, generate xyz structures from a provided trajectory and analyze MD trajectories composed of a liquid in confinement.
 The program has the following features:
 
-* Generate structures like carbon walls, carbon nanotubes (CNT), pore structures and their boron nitride analogues. All carbons can be doped with graphitic nitrogen.
+* Generate structures such as carbon walls, carbon nanotubes (CNT), pore structures, and their boron nitride analogues. All carbon structures can be doped with graphitic nitrogen.
 * Set up simulation boxes with a bulk liquid input file and carbon structures of choice.
-* Identify and characterize solid structures found in a MD trajectory.
-* Calculate the radial density inside a CNT/pore.
+* Identify and characterize solid structures found in an MD trajectory.
+* Calculate the radial density within a CNT/pore, either weighted by mass or by partial charge.
 * Calculate the accessible volume of a CNT/pore.
 * Calculate the axial density along a simulation box.
-* Cut any frame from a trajectory
-* Cut a pore/CNT from any given frame, either filled with liquid or empty.
+* Cut a pore/CNT from the trajectory, either filled with liquid or empty.
 
-Additionally the program has a molecule identifier implemented, which makes it possible to perform all analysis for the individual kind of molecules present in the system.
+In addition, the program includes a molecular identification tool, which makes it possible to perform all analyses for the individual types of molecules present in the system or even individual atoms.
 
-Check out :doc:`first_steps/Installation` for more information on how to install CONAn.
+Check out :doc:`first_steps/Installation` for more information on how to install CONAN.
 
 .. toctree::
    :caption: First Steps
