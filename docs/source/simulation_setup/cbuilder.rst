@@ -27,19 +27,19 @@ The program can create the following structures:
    :alt: Wall_N
 
 .. image:: ../pictures/wall_side.png
-   :width: 13%
+   :width: 10%
    :alt: wall_side
 
 .. image:: ../pictures/CNT.png
-   :width: 33%
+   :width: 30%
    :alt: CNT
 
 .. image:: ../pictures/pore_front.png
-   :width: 33%
+   :width: 30%
    :alt: Pore
 
 .. image:: ../pictures/pore_side.png
-   :width: 33%
+   :width: 30%
    :alt: Pore_closed
 
 Structures are built by using the following default parameters:
