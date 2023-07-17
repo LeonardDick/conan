@@ -1,4 +1,4 @@
-Nano structures
+Structures
 =================
 
 This mode is automatically started, when the ``-c`` flag is added when starting the program.

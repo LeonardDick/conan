@@ -36,7 +36,7 @@ Check out :doc:`first_steps/Installation` for more information on how to install
    :caption: Simulation Setup
    :maxdepth: 2
 
-   simulation_setup/cbuilder
+   simulation_setup/builder
    simulation_setup/simulation_box
 
 .. toctree::
