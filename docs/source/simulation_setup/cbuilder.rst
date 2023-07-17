@@ -27,7 +27,7 @@ The program can create the following structures:
    :alt: Wall_N
 
 .. image:: ../pictures/wall_side.png
-   :width: 20%
+   :width: 13%
    :alt: wall_side
 
 .. image:: ../pictures/CNT.png
@@ -38,7 +38,7 @@ The program can create the following structures:
    :width: 33%
    :alt: Pore
 
-.. image:: ../pictures/closed_side.png
+.. image:: ../pictures/pore_side.png
    :width: 33%
    :alt: Pore_closed
 
