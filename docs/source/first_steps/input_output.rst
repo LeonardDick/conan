@@ -1,4 +1,4 @@
-Input
+Input & Output
 ============
 
 The program can also be executed using an input file by specifying the ``-i`` flag and the input file in the command line. 
@@ -11,10 +11,6 @@ The input file is to be structured in such a way that each question question, wh
 The program reads all entries which are the same line subsequent to the question as the given answer. 
 This makes it possible to use the conan.log file of an previously conducted analysis as input file for a further analysis.
 
-
-
-Output
-============
 
 All output structures and data files are either directly saved in the current directory where the program is run, or a new folder is created in the current working directory.
 If there are files or folders in the working directory, which are identically named as the ouput files, the old files are either renamed or overwritten.
