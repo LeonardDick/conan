@@ -36,8 +36,8 @@ ddict.printLog('')
 # INFO
 # Refer to the documentation for more information on the program. Website is con-an.readthedocs.io.
 ddict.printLog('Find the documentation on the CONAn website: http://con-an.readthedocs.io')
-# ddict.printLog('If you use CONAN in your research, please cite the following paper:')
-# ddict.printLog('XXX')
+ddict.printLog('If you use CONAN in your research, please cite the following paper:')
+ddict.printLog('https://doi.org/10.1021/acs.jcim.3c01075')
 ddict.printLog('')
 
 # ARGUMENTS
