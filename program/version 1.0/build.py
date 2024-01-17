@@ -11,7 +11,6 @@ import random
 from prettytable import PrettyTable
 # ----- Own modules ----- #
 import defdict as ddict
-import traj_info
 
 # RUNTIME
 build_time = time.time()
@@ -20,22 +19,21 @@ build_time = time.time()
 args = ddict.read_commandline()
 
 
-
 # Define bond length and interlayer distance.
 def parameters(build) -> Tuple[float, float]:
     if build != 5:
         layer_distance = 3.35
         bond_distance = 1.42
-        ddict.printLog("Default Parameters:\nC-C distance: {:.2f} Ang\nInterlayer distance of carbon sheets: {:.2f} Ang".format(bond_distance, layer_distance))
+        ddict.printLog("Default Parameters:\nC-C distance: {:.2f} Angstrom\nInterlayer distance of carbon sheets: {:.2f} Angstrom".format(bond_distance, layer_distance))
     else:
         layer_distance = 3.33
         bond_distance = 1.446
-        ddict.printLog("Default Parameters:\nB-N distance: {:.3f} Ang\nInterlayer distance of boron nitride sheets: {:.2f} Ang".format(bond_distance, layer_distance))
+        ddict.printLog("Default Parameters:\nB-N distance: {:.3f} Angstrom\nInterlayer distance of boron nitride sheets: {:.2f} Angstrom".format(bond_distance, layer_distance))
     
-    change_paras = ddict.get_input("Change values? [y/n] ", args, 'string')
+    change_paras = ddict.get_input("Change values? [y/n] ", args)
     if change_paras == 'y':
-        bond_distance = float(ddict.get_input("New bond distance: ", args, 'float'))
-        layer_distance = float(ddict.get_input("New interlayer distance: ", args, 'float'))
+        bond_distance = float(ddict.get_input("New bond distance: ", args))
+        layer_distance = float(ddict.get_input("New interlayer distance: ", args))
 
     return bond_distance, layer_distance
 
@@ -44,10 +42,9 @@ def parameters(build) -> Tuple[float, float]:
 def wall_structure(carbon_distance, interlayer_distance, boronnitride) -> pd.DataFrame:
 
     # General questions.
-    ddict.printLog('')
-    size_graphsheet_x = float(ddict.get_input('How far should the walls extend in x direction? [Ang]  ', args, 'float'))
-    size_graphsheet_y = float(ddict.get_input('How far should the walls extend in y direction? [Ang]  ', args, 'float'))
-    num_layer = int(ddict.get_input('How many layers in z direction?   ', args, 'int'))
+    size_graphsheet_x = float(ddict.get_input('\nHow large should the walls extend in x direction? [Angström]  ', args))
+    size_graphsheet_y = float(ddict.get_input('How large should the walls extend in y direction? [Angström]  ', args))
+    num_layer = int(ddict.get_input('How many layers in z direction?   ', args))
 
     # Load the provided distances and bond lengths.
     distance = float(carbon_distance)
@@ -116,224 +113,17 @@ def wall_structure(carbon_distance, interlayer_distance, boronnitride) -> pd.Dat
     return positions
 
 
-# Multiple CNTs
-def stacked_CNTs(radius, positions_tube) -> pd.DataFrame:
-
-        #First set a distance between the tubes.
-        distance_tubes = float(ddict.get_input('Which distance between the tubes? [Ang]  ', args, 'float'))
-        radius_distance = radius + distance_tubes/2
-
-        # Now the position of the second tube is calculated
-        # The tube is shifted by the radius_distance in x direction,and by sqrt(3)*radius_distance in y direction.
-        tube_two = positions_tube.copy()
-        tube_two.iloc[:,1] = tube_two.iloc[:,1] + radius_distance
-        tube_two.iloc[:,2] = tube_two.iloc[:,2] + radius_distance*math.sqrt(3)
-
-        # Concatenate the two tubes
-        unit_cell = pd.DataFrame()
-        unit_cell = pd.concat([positions_tube, tube_two], ignore_index=True)
-
-
-        # Now build the periodic unit cell from the given atoms.
-        # The dimensions of the unit cell are 2*radius_distance in x direction and 2*radius_distance*math.sqrt(3) in y direction.
-        unit_cell_x = float(2*radius_distance)
-        unit_cell_y = float(2*radius_distance*math.sqrt(3))
-
-        # Check all atoms in the positions_tube dataframe and shift all atoms that are outside the unit cell to the inside of the unit cell.
-        for i in range(0, len(unit_cell)):
-            if unit_cell.iloc[i,1] > unit_cell_x:
-                unit_cell.iloc[i,1] = unit_cell.iloc[i,1] - unit_cell_x
-            if unit_cell.iloc[i,1] < 0:
-                unit_cell.iloc[i,1] = unit_cell.iloc[i,1] + unit_cell_x
-            if unit_cell.iloc[i,2] > unit_cell_y:
-                unit_cell.iloc[i,2] = unit_cell.iloc[i,2] - unit_cell_y
-            if unit_cell.iloc[i,2] < 0:
-                unit_cell.iloc[i,2] = unit_cell.iloc[i,2] + unit_cell_y
-
-        # Now multiply the unit cell in x and y direction to fill the whole simulation box.
-        multiplicity_x = int(ddict.get_input("Multiplicity in x direction:  ", args, 'int'))
-        multiplicity_y = int(ddict.get_input("Multiplicity in y direction:  ", args, 'int'))
-
-        # The positions of the atoms in the unit cell are copied and shifted in x and y direction.
-        super_cell = pd.DataFrame()
-        supercell_x = unit_cell.copy()
-        for i in range(0, multiplicity_x):
-            supercell_x.iloc[:,1] = unit_cell.iloc[:,1] + i*unit_cell_x
-            super_cell = pd.concat([super_cell, supercell_x], ignore_index=True)
-
-        supercell_y = super_cell.copy()
-        original_super_cell = super_cell.copy()
-        for i in range(1, multiplicity_y):
-            supercell_y.iloc[:,2] = original_super_cell.iloc[:,2] + i*unit_cell_y
-            super_cell = pd.concat([super_cell, supercell_y], ignore_index=True)
-
-
-        # Now the supercell is written to positions_tube.
-        positions_tube = super_cell.copy()
-
-        # Change the tuple to a dataframe.
-        positions_tube = pd.DataFrame(positions_tube)
-        positions_tube = positions_tube[["Element", "x", "y", "z"]]
-
-        # Finally compute the PBC size of the simulation box. It is given by the multiplicity in x and y direction times the unit cell size.
-        pbc_size_x = multiplicity_x * unit_cell_x
-        pbc_size_y = multiplicity_y * unit_cell_y
-
-        # Print the information about the stacked CNTs.
-        ddict.printLog(f'')
-        ddict.printLog(f'[INFO] The stacked CNTs have the following dimensions:')
-        ddict.printLog(f'Number of CNTs: {multiplicity_x * multiplicity_y * 2}')
-        ddict.printLog(f'Radius: {round(radius, 3)}')
-        # Print the periodic boundary conditions with 3 decimal places
-        ddict.printLog(f'PBC in x direction: {round(pbc_size_x, 3)}')
-        ddict.printLog(f'PBC in y direction: {round(pbc_size_y, 3)}')
-        
-
-        return positions_tube, pbc_size_x, pbc_size_y, multiplicity_x, multiplicity_y
-    
-
-# Multiple stacked CNTs from given file
-def stacked_from_input() -> pd.DataFrame:
-    struc_file = ddict.get_input('What is the name of the input file?  ', args, 'string')
-
-    # Read the input file. Skip the first two lines.
-    input_file = open(struc_file, "r")
-    input_file.readline()
-    input_file.readline()
-    positions = pd.DataFrame([line.split() for line in input_file], columns = ["Element", "x", "y", "z"])
-
-    # Delete all empty rows and reset the index.
-    positions = positions.dropna()
-    positions = positions.reset_index(drop=True)    
-
-    # Now we identify all different molecules in the input file using the molecule recognition function from the traj_info module.
-    # Set an arbitary box size of 1000 Ang.
-    box_size=(1000, 1000, 1000)
-    positions = traj_info.molecule_recognition(positions, box_size)
-
-    # Make a list of all different molecules.
-    molecules = positions.iloc[:,4].unique()
-
-    # Make a list of all different x and y coordinates.
-    x_y_values = []
-    for i in range(0, len(positions)):
-        x_y_values.append((positions.iloc[i,1], positions.iloc[i,2]))
-    x_y_values = list(set(x_y_values))
-
-    # Make a list of all different molecules with repeated x and y coordinates.
-    repeated_molecules = []
-    unique_molecule_atoms = []
-    for molecule in molecules:
-        # Make a list of all atoms of the current molecule.
-        molecule_atoms = []
-        for i in range(0, len(positions)):
-            if positions.iloc[i,4] == molecule:
-                molecule_atoms.append((positions.iloc[i,1], positions.iloc[i,2]))
-
-        # Check for duplicates in the molecule_atoms list.
-        unique_molecule_atoms = list(set(molecule_atoms))
-
-        if len(unique_molecule_atoms) < len(molecule_atoms):
-            repeated_molecules.append(int(molecule))
-
-    ddict.printLog(f'')
-    ddict.printLog(f'[INFO] The following molecule has repeated x and y coordinates and is set as CNT: {repeated_molecules[0]}\n')
-
-    # Identify the radius of the CNT. It is the distance between the center of the CNT and the first atom of the CNT.
-    # The center of the CNT is the average of the x and y coordinates of the atoms of the CNT.
-
-    # Make a list of all atoms of the CNT.
-    cnt_atoms = []
-    for i in range(0, len(positions)):
-        if positions.iloc[i,4] == repeated_molecules[0]:
-            cnt_atoms.append((positions.iloc[i,0], positions.iloc[i,1], positions.iloc[i,2], positions.iloc[i,3]))
-
-    # Calculate the center of the CNT.
-    centerx = 0
-    centery = 0
-    for i in range(0, len(cnt_atoms)):
-        centerx += float(cnt_atoms[i][1])
-        centery += float(cnt_atoms[i][2])
-    centerx = centerx / len(cnt_atoms)
-    centery = centery / len(cnt_atoms)
-
-
-    # Calculate the distance between the center of the CNT and the first atom of the CNT.
-    radius = ((centerx - float(cnt_atoms[0][1])) ** 2 + (centery - float(cnt_atoms[0][2])) ** 2) ** 0.5
-
-    # Make sure the positions dataframe is in the right format, with the x and y values as format float.
-    positions[positions.columns[1:4]] = positions[positions.columns[1:4]].astype(float)
-
-    # Now build the stacked CNTs.
-    positions_stacked, pbc_x, pbc_y, mult_x, mult_y = stacked_CNTs(radius, positions)
-
-    # Calculate the total number of CNTs 
-    number_of_CNTs = 2 * mult_x * mult_y	
-
-    # Now we have to add the periodic boundary conditions in the z direction.
-    # Make a list of all different z coordinates.
-
-    z_values = []
-    for i in range(0, len(cnt_atoms)):
-        z_values.append(float(cnt_atoms[i][3]))
-
-    # Order the z_values list by increasing z values and just keep the unique ones.
-    z_values = list(set(z_values))
-    z_values = sorted(z_values)
-
-    # Calculate the distance between the first and second z value and 2 and 3 and so on.
-    zstep = []
-    for i in range(0, len(z_values) - 1):
-        zstep.append(z_values[i + 1] - z_values[i])
-
-    zstep_unique = list(set(zstep))
-
-    # If the difference between the smallest and largest distance is below the threshold of 0.01, we assume that the zstep is constant.
-    if max(zstep_unique) - min(zstep_unique) < 0.01:
-        zstep_unique = max(zstep_unique)
-        tube_kind = 1
-    else:
-        tube_kind = 2
-
-    # If the CNT is armchair, the periodic boundary conditions are just the maximum z value plus the zstep_unique.
-    if tube_kind == 1:
-        pbc_z = z_values[-1] + zstep_unique
-    else:
-        pbc_z = z_values[-1] + 1.42
-
-    # Now adjust the z coordinates of the atoms in the positions_stacked dataframe to fit the periodic boundary conditions, if desired.
-    pbc_z_question = ddict.get_input('Adjust the z coordinates of the atoms to fit the periodic boundary conditions? [y/n]  ', args, 'string')
-    if pbc_z_question == 'y':
-        for i in range(0, len(positions_stacked)):
-            if positions_stacked.iloc[i,3] > pbc_z:
-                positions_stacked.iloc[i,3] = positions_stacked.iloc[i,3] - pbc_z
-            if positions_stacked.iloc[i,3] < 0:
-                positions_stacked.iloc[i,3] = positions_stacked.iloc[i,3] + pbc_z
-
-    #Finally print the information about the stacked CNTs.
-    ddict.printLog(f'')
-    ddict.printLog(f'[INFO] The stacked CNTs have the following dimensions:')
-    ddict.printLog(f'Number of CNTs: {number_of_CNTs}')
-    ddict.printLog(f'Radius: {round(radius, 3)}')
-    # Print the periodic boundary conditions with 3 deecimal places
-    ddict.printLog(f'PBC in x direction: {round(pbc_x, 3)}')
-    ddict.printLog(f'PBC in y direction: {round(pbc_y, 3)}')
-    ddict.printLog(f'PBC in z direction: {round(pbc_z, 3)}')
-
-    return positions_stacked
-
 # Tube section.
 def CNT(distance, boronnitride) -> Tuple[pd.DataFrame, float, int, float, float]:
 
     # General questions.
-    ddict.printLog('')
-    tube_kind = float(ddict.get_input('What kind of tube? [1]armchair [2]zigzag   ', args, 'float'))
+    tube_kind = float(ddict.get_input('\nWhat kind of tube? [1]armchair [2]zigzag   ', args))
     if tube_kind == 1:
-       tube_size = int(ddict.get_input('What size should the armchair tube be? [Give m in (m,m) CNT]   ', args, 'int'))
+       tube_size = int(ddict.get_input('What size should the armchair tube be? [Give m in (m,m) CNT]   ', args))
 
     elif tube_kind == 2:
-         tube_size = int(ddict.get_input('What size should the zigzag tube be? [Give m in (m,0) CNT]   ', args, 'int'))
-    tube_length = float(ddict.get_input('How long should the tube be? [Ang]   ', args, 'float'))
+         tube_size = int(ddict.get_input('What size should the zigzag tube be? [Give m in (m,0) CNT]   ', args))
+    tube_length = float(ddict.get_input('How long should the tube be? [Angström]   ', args))
 
     # Load the provided distances and bond lengths.
     distance = float(distance)
@@ -519,21 +309,12 @@ def CNT(distance, boronnitride) -> Tuple[pd.DataFrame, float, int, float, float]
                     positions_tube.loc[positions_tube.iloc[:,3] == z_values[i], "Atom"] = "B"
             # Change all remaining C atoms to nitrogen.
             positions_tube.loc[positions_tube.iloc[:,0] == "C", "Atom"] = "N"
-    
-    # If the analysis option 'pore' is chosen, stacked CNTs can not be build.
-    if question_build != 4:
-        # Multiple CNTs in densest packing
-        multiple_tubes = ddict.get_input("Multiple stacked CNTs? [y/n]  ", args, 'string')
-        if multiple_tubes == "y":
-            # rename the 'Atom' column to the 'Element' column
-            positions_tube = positions_tube.rename(columns={"Atom": "Element"})
-            positions_tube, pbc_x, pbc_y, multi_x, multi_y = stacked_CNTs(radius, positions_tube)
-
+            
 
     return positions_tube, radius, tube_kind, z_max, zstep
 
 
-# Pore section.
+# Pore section .
 def Pore(carbon_distance: float, interlayer_distance: float, boronnitride: bool) -> Tuple[int, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int, float, float]:
     
     # Parameters
@@ -559,8 +340,8 @@ def Pore(carbon_distance: float, interlayer_distance: float, boronnitride: bool)
 
     # Combine the carbon wall and CNT
     pore = pd.concat([wall_hole, cnt])
-    ddict.printLog('\nOptions:\n[1] Pore with walls on both ends\n[2] Closed Pore with one wall')
-    pore_kind = int(ddict.get_input('Which kind of pore to build?: ', args, 'int')) 
+
+    pore_kind = int(ddict.get_input('\n[1] Pore with walls on both ends\n[2] Closed Pore with one wall\nInput: ', args)) 
     
     # Create a pore with walls on both ends
     if pore_kind == 1:
@@ -596,7 +377,7 @@ def Pore(carbon_distance: float, interlayer_distance: float, boronnitride: bool)
 
     return pore_kind, pore, pore2, wall, cnt, radius, tube_kind, max_z, zstep
 
-
+        
 # Print section.
 def xyz_file(name_output, coordinates) -> None:
 
@@ -688,7 +469,7 @@ def table_dimensions_cnt(name_output, radius, tube_kind, max_z, bond_distance, z
         tube_name = "zigzag"
         
     tube_table = PrettyTable()
-    tube_table.title = name_output + " dimensions [Ang]"
+    tube_table.title = name_output + " dimensions [Angstrom]"
     tube_table.field_names = ["Parameter", "Value"]
     tube_table.add_row(['configuration', tube_name])
     tube_table.add_row(['radius', round(radius, 3)])
@@ -699,21 +480,16 @@ def table_dimensions_cnt(name_output, radius, tube_kind, max_z, bond_distance, z
     ddict.printLog(tube_table)
 
 
+
 # MAIN SECTION
+
 # General questions.
 ddict.printLog('BUILD mode', color='red')
-ddict.printLog('\nOptions:\n[1]Carbon wall\n[2]CNT\n[3]Carbon wall and CNT\n[4]Pore structure\n[5]Boron nitride structures\n[6]Build stacked CNTs from input file')
-question_build = int(ddict.get_input('What do you want to build? [1-6]: ', args, 'int'))
 ddict.printLog('')
-# Repeat the question if the input is not valid.
-while question_build not in [1, 2, 3, 4, 5, 6]:
-    ddict.printLog('Invalid input. Try again.\n', color='red')
-    question_build = int(ddict.get_input('What do you want to build? [1-6]: ', args, 'int'))
-    ddict.printLog('')
-
-# Parameter adjustment.
-if question_build != 6:
-    bond_distance, layer_distance = parameters(question_build)
+question_build = int(ddict.get_input('What do you want to build?\n[1]Carbon wall\n[2]CNT\n[3]Carbon wall and CNT\n[4]Pore structure\n[5]Boron nitride structures\nInput [1-5]: ', args))
+ddict.printLog('')
+# Carbon parameter adjustment.
+bond_distance, layer_distance = parameters(question_build)
 
 # Building section.
 # Predefine all structure dataframes.
@@ -739,7 +515,7 @@ if question_build == 4:
     pore_kind, pore, pore2, positions, positions_tube, radius, tube_kind, max_z, zstep = Pore(bond_distance, layer_distance, boronnitride)
 
 if question_build == 5:
-    question_what_structure = int(ddict.get_input('\nWhat do you want to build?\n[1]Boron nitride wall\n[2]Boron nitride nanotube\n[3]Boron nitride pore\nInput [1-3]: ', args, 'int'))
+    question_what_structure = int(ddict.get_input('\nWhat do you want to build?\n[1]Boron nitride wall\n[2]Boron nitride nanotube\n[3]Boron nitride pore\nInput [1-3]: ', args))
     
     if question_what_structure == 1:
         positions = wall_structure(bond_distance, layer_distance, boronnitride)
@@ -750,32 +526,29 @@ if question_build == 5:
     if question_what_structure == 3:
         pore_kind, pore, pore2, positions, positions_tube, radius, tube_kind, max_z, zstep = Pore(bond_distance, layer_distance, boronnitride)
 
-if question_build == 6:
-    positions_stacked = stacked_from_input()
+ 
 
 # Units and doping section.
-ddict.printLog('\nDo you want to change units [Default is Ang] or add doping?\n')
+ddict.printLog('\nDo you want to change units  [Default is Angstrom] or add doping?\n')
 ddict.printLog('Doping is only possible for carbon structures.\n', color='red')
 
 question_doping_units = 0
 if question_build != 5:
-    ddict.printLog('Options:\n[1]Change units\n[2]Add doping\n[3]Change units and add doping\n[4]No changes')
-    question_doping_units=int(ddict.get_input('Change the structure? [1-4]: ', args, 'int'))
+    question_doping_units=int(ddict.get_input('[1]Change units\n[2]Add doping\n[3]Change units and add doping\n[4]No changes\nInput [1-4]: ', args))
 
 
 # Units section.
 if question_doping_units == 1 or question_doping_units == 3:
     
     # Ask for units.
-    ddict.printLog('\nOptions:\n[1]Bohr\n[2]New')
-    question_units=int(ddict.get_input('What units do you want to use? [1-2]: ', args, 'int'))
+    question_units=int(ddict.get_input('\nWhat units do you want to use?\n[1]Bohr\n[2]New\nInput [1-2]: ', args))
     ddict.printLog("\n")
 
     if question_units == 1:
         ddict.printLog('Converting units to Bohr...')
         arbunits=1/0.529177
     else:
-        arbunits=float(ddict.get_input('What conversion factor from Ang do you want to use? ', args, 'float'))
+        arbunits=float(ddict.get_input('What conversion factor from Angstrom do you want to use? ', args))
 
     # Convert units.
     if question_build == 1 or question_build == 3 or question_build == 4 or [question_build == 5 and question_what_structure == 1]:
@@ -795,12 +568,10 @@ if question_doping_units == 2 or question_doping_units == 3:
     if boronnitride == True:
         ddict.printLog_red('\nDoping is only possible for carbon structures. Skipping...\n')
     else:
-        ddict.printLog('\nOptions:\n[1]Graphitic nitrogen\n[2]None')
-        question_doping = int(ddict.get_input('What kind of atoms do you want to add? [1-2]: ', args, 'int'))
+        question_doping = int(ddict.get_input('\nWhat kind of atoms do you want to add?\n[1]Graphitic nitrogen\n[2]None\nInput [1-2]: ', args))
         if question_doping == 1:
             # The percentage of doped atoms is given by the user, as a float between 0 and 100. The value is divided by 100 to get a percentage.
-            ddict.printLog('')
-            question_doping_amount = float(ddict.get_input('What percentage of atoms do you want to change? ', args, 'float')) / 100
+            question_doping_amount = float(ddict.get_input('\nWhat percentage of atoms do you want to change? ', args)) / 100
 
             # Defined by the precentage of doped atoms, change the atom name for a given amount of atoms to N.  
             if question_build == 1 or question_build == 3 or question_build == 4:
@@ -866,9 +637,6 @@ if question_build == 5:
         xyz_file("boronnitride_pore_right", pore)
         table_atoms_print("Boron nitride right pore", pore)
 
-if question_build == 6:
-    xyz_file("stacked_CNTs", positions_stacked)
-    table_atoms_print("Stacked CNTs", positions_stacked)
 
 # Print the time the module needed.
 ddict.printLog("\nCBuild mode finished in %0.3f seconds" % (time.time()-build_time))

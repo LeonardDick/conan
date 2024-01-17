@@ -37,7 +37,7 @@ ddict.printLog('')
 # Refer to the documentation for more information on the program. Website is con-an.readthedocs.io.
 ddict.printLog('Find the documentation on the CONAn website: http://con-an.readthedocs.io')
 ddict.printLog('If you use CONAN in your research, please cite the following paper:')
-ddict.printLog('doi.org/10.1021/acs.jcim.3c01075')
+ddict.printLog('https://doi.org/10.1021/acs.jcim.3c01075')
 ddict.printLog('')
 
 # ARGUMENTS
@@ -54,16 +54,14 @@ if args['box']:
 
 # TRAJECTORY ANALYSIS SECTION
 if args['trajectoryfile']:
-    ddict.printLog(f'Trajectory: {args["trajectoryfile"]}')
-    ddict.printLog('')
+
     # Load the atom data.
     import traj_info
     atoms, id_frame, id_frame2, box_size = traj_info.read_first_frame(args["trajectoryfile"])
-    id_frame, min_z_pore, max_z_pore, length_pore, CNT_centers, tuberadii, CNT_volumes, CNT_atoms, Walls_positions \
-        = traj_info.structure_recognition(id_frame, box_size)
+    id_frame, min_z_pore, max_z_pore, length_pore, CNT_centers, tuberadii, CNT_volumes, CNT_atoms, Walls_positions = traj_info.structure_recognition(id_frame, box_size)
 
     import traj_an 
 
-    traj_an.analysis_opt(id_frame, CNT_centers, box_size, tuberadii, min_z_pore, max_z_pore, length_pore, Walls_positions)
+    traj_an.analysis_opt(id_frame, CNT_centers, box_size, tuberadii, min_z_pore, max_z_pore, length_pore)
 
 ddict.printLog('The program took %0.3f seconds to run.' % (time.time() - start_time))

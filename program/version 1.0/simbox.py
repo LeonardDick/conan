@@ -26,7 +26,7 @@ def simbox_mode(args) -> None:
     ddict.printLog('This program adds solid structures and liquid bulk xyz files to one simulation box.')
     ddict.printLog('P stands for pore, B for liquid bulk, and W for wall.')
     ddict.printLog('If pore_left and pore_right from the cbuild section are used, enter L for the left pore and R for the right pore.')
-    combination = ddict.get_input('Please enter the wanted combination for the simulation box [eg.: BPBW]: ', args, 'string')
+    combination = ddict.get_input('Please enter the wanted combination for the simulation box [eg.: BPBW]: ', args)
     ddict.printLog('')
 
     # Split the string into a list.

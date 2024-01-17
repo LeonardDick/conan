@@ -40,7 +40,7 @@ def printLog(*args, color=None, **kwargs) -> None:
         print(message, file=file)
 
 # Write input to log file.
-def get_input(question, args, input_type) -> str:
+def get_input(question, args) -> str:
     var = None
     # If an input file is given, use that instead of asking for input.
     if args["input"] is not None:
@@ -49,31 +49,15 @@ def get_input(question, args, input_type) -> str:
             for line in file:
                 if line.startswith(question):
                     # Return the answer, it is everthing after the question which is in the same line.
-                    if input_type == 'float':
-                        var = float(line[len(question):].strip())
-                    elif input_type == 'int':
-                        var = int(line[len(question):].strip())   
-                    else:
-                        var = line[len(question):].strip()                 
+                    var = line[len(question):].strip()
                     print(question, var)
                     break
 
     # If no input file is given or the question is not found, ask for input
     if var is None:
-        while True:
-            try:
-                if input_type == 'float':
-                    var = float(input(question))
-                elif input_type == 'int':
-                    var = int(input(question))
-                else:
-                    var = input(question)
-                break
-            except ValueError:
-                printLog('Please enter a valid answer.', color='red')
-                continue
+        var = input(question)
 
-    # Write the input to the log file.
+    # Write input to log file
     with open('conan.log', 'a') as file:
         print(question, var, file=file)
 
@@ -84,23 +68,17 @@ def get_input(question, args, input_type) -> str:
 # DICTIONARIES 
 # Atomic masses.
 def dict_mass() -> dict:
-    elem_masses = {'H': 1.008, 'Li': 6.941, 'Na': 22.990, 'K': 39.098, 'Mg': 24.305, 'Ca': 40.078, 'Zn': 65.38,
-                   'C': 12.011, 'N': 14.007, 'O': 15.999, 'B': 10.811, 'F': 18.998, 'P': 30.974, 'S': 32.065, 
-                   'Ag': 107.868, 'Au': 196.967, 'D': 0.00, 'X': 0.00}   
+    elem_masses = {'H': 1.008, 'C': 12.011, 'N': 14.007, 'O': 15.999, 'F': 18.998, 'P': 30.974, 'S': 32.065}   
     return elem_masses
 
 # Atomic van der Waals radii.
 def dict_vdW() -> dict:
-    elem_vdW = {'H': 1.20, 'Li': 1.81, 'Na': 2.27, 'K': 2.75, 'Mg': 1.73, 'Ca': 2.31, 'Zn': 1.39,
-                'C': 1.70, 'N': 1.55, 'O': 1.52, 'B': 1.65, 'F': 1.47, 'P': 1.80, 'S': 1.80, 
-                'Ag': 1.72, 'Au': 1.66, 'D': 0.00, 'X': 0.00} # 'Na = 2.27'
+    elem_vdW = {'H': 1.20, 'C': 1.70, 'N': 1.55, 'O': 1.52, 'F': 1.47, 'P': 1.80, 'S': 1.80}
     return elem_vdW
 
 # Atomic covalent radii.
 def dict_covalent() -> dict:
-    elem_covalent = {'H': 0.31, 'Li': 1.28, 'Na': 1.66, 'K': 2.03, 'Mg': 1.41, 'Ca': 1.71, 'Zn': 1.18,
-                     'C': 0.76, 'N': 0.71, 'O': 0.66, 'B': 0.84, 'F': 0.57, 'P': 1.07, 'S': 1.05, 
-                     'Ag': 1.45, 'Au': 1.36, 'D': 0.00, 'X': 0.00} # 'Na = 1.66'
+    elem_covalent = {'H': 0.31, 'C': 0.76, 'N': 0.71, 'O': 0.66, 'F': 0.57, 'P': 1.07, 'S': 1.05}
     return elem_covalent
 
 # Cutoff distances for bond identification.

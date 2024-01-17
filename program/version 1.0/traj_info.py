@@ -5,6 +5,7 @@ import MDAnalysis as mda
 import networkx as nx
 from collections import Counter
 import pandas as pd
+import networkx as nx
 from rdkit import Chem
 from rdkit.Chem import Draw
 import re
@@ -19,33 +20,7 @@ import defdict as ddict
 #ARGUMENTS
 args = ddict.read_commandline()
 
-pd.options.mode.chained_assignment = None  # default='warn'. Enabling this warning gices a false positive in molecular_recognition().
-
 #FUNCTIONS
-def read_lammps_frame(f, atom_positions):
-    data_list = []
-    df_list = []
-    for line in f:
-        if line.strip() == "ITEM: TIMESTEP":
-            break
-        entries = line.split()
-        atom_id = entries[atom_positions['id']]
-        atom_type = entries[atom_positions['type']]
-        atom_x = float(entries[atom_positions['x']])
-        atom_y = float(entries[atom_positions['y']])
-        atom_z = float(entries[atom_positions['z']])
-        atom_mol = entries[atom_positions['mol']] if atom_positions['mol'] is not None else None
-        atom_charge = float(entries[atom_positions['charge']]) if atom_positions['charge'] is not None else None
-        df_list.append([atom_type, atom_x, atom_y, atom_z, atom_mol, atom_charge])
-        entry = {'element': str(atom_type), 'x': float(atom_x), 'y': float(atom_y), 'z': float(atom_z)}
-        data_list.append(entry)
-    
-    # Create a DataFrame from the collected data
-    id_frame = pd.DataFrame(df_list, columns=['Element', 'x', 'y', 'z', 'Molecule', 'Charge'])
-
-    return id_frame, data_list
-
-
 def read_first_frame(file) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, tuple]:
 
     # If file is in XYZ format:
@@ -69,7 +44,7 @@ def read_first_frame(file) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, tu
             atom_y = atom.position[1]
             atom_z = atom.position[2]
 
-            # Extract atom charge and molecule, if it's not available it will raise an error.
+            # Extract atom charge and molecule, if it's not available in your universe it will raise an error.
             try:
                 atom_molecule = atom.resname  
                 atom_charge = atom.charge
@@ -107,10 +82,11 @@ def read_first_frame(file) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, tu
 
         # Simulation box dimensions
         ddict.printLog('Enter the dimensions of the simulation box [Ang]:')
-        simbox_x = float(ddict.get_input('[X]   ', args, 'float'))
-        simbox_y = float(ddict.get_input('[Y]   ', args, 'float'))
-        simbox_z = float(ddict.get_input('[Z]   ', args, 'float'))
-    
+        simbox_x = float(ddict.get_input('[X]   ', args))
+        simbox_y = float(ddict.get_input('[Y]   ', args))
+        simbox_z = float(ddict.get_input('[Z]   ', args))
+        
+
     # If file is in PDB format:
     elif file.endswith('.pdb'):
 
@@ -161,6 +137,7 @@ def read_first_frame(file) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, tu
         for index, row in id_frame.iterrows():
             entry = {'element': str(row['Element']), 'x': float(row['x']), 'y': float(row['y']), 'z': float(row['z'])}
             data_list.append(entry)
+    
 
     # If file is in LAMMPS format:
     elif file.endswith('.lmp') or file.endswith('.lammpstrj'):
@@ -180,41 +157,67 @@ def read_first_frame(file) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, tu
             simbox_y=float(simbox_y_line.split()[-1])
             simbox_z_line=f.readline()
             simbox_z=float(simbox_z_line.split()[-1])
+            read_one_frame=f.readline()
+
+            # Read the atom information for the first frame
+            data_list = []
+            df_list = []
+            for line in f:
+                if line.strip() == "ITEM: TIMESTEP":
+                    break
+                entries = line.split()
+                atom_id = entries[0]
+                atom_type = entries[1]
+                atom_x = float(entries[2])
+                atom_y = float(entries[3])
+                atom_z = float(entries[4])
+                entry = {'element': str(atom_type), 'x': float(atom_x), 'y': float(atom_y), 'z': float(atom_z)}
+                data_list.append(entry)
+                
+                df_list.append([atom_type, atom_x, atom_y, atom_z])
             
-            # Get the header line to determine the position of each piece of data
-            header = f.readline().strip().split()
-                        
-            # Determine the position of each piece of data based on header
-            atom_id_pos = header.index('id') - 2
-            atom_type_pos = header.index('element') - 2
-            atom_x_pos = header.index('xu') - 2
-            atom_y_pos = header.index('yu') - 2
-            atom_z_pos = header.index('zu') - 2
-            atom_mol_pos = header.index('mol') - 2 if 'mol' in header else None
-            atom_charge_pos = header.index('q') - 2 if 'q' in header else None
+            # Create a DataFrame from the collected data
+            id_frame = pd.DataFrame(df_list, columns=['type', 'x', 'y', 'z'])
+            
+            # Add additional columns if available in your LAMMPS file
+            id_frame['Molecule'] = None
+            id_frame['Charge'] = None
+            id_frame['Label'] = None
+            id_frame.rename(columns={'type': 'Element'}, inplace=True)            
 
-            atom_positions = {'id': atom_id_pos, 'type': atom_type_pos, 'x': atom_x_pos, 'y': atom_y_pos, 'z': atom_z_pos, 'mol': atom_mol_pos, 'charge': atom_charge_pos}
-
-            id_frame, data_list = read_lammps_frame(f, atom_positions)
+            # Order the columns in the dataframe by element x y z molecule charge label.
+            id_frame=id_frame[['Element', 'x', 'y', 'z', 'Molecule', 'Charge', 'Label']]
 
             # Read the atom information for the second frame
             for i in range(8):
                 next(f)
-            id_frame2, data_list2 = read_lammps_frame(f, atom_positions)
+            data_list = []
+            df_list = []
+            for line in f:
+                if line.strip() == "ITEM: TIMESTEP":
+                    break
+                entries = line.split()
+                atom_id = entries[0]
+                atom_type = entries[1]
+                atom_x = float(entries[2])
+                atom_y = float(entries[3])
+                atom_z = float(entries[4])
+                entry = {'element': str(atom_type), 'x': float(atom_x), 'y': float(atom_y), 'z': float(atom_z)}
+                data_list.append(entry)
+
+                df_list.append([atom_type, atom_x, atom_y, atom_z])
+
+            # Create a DataFrame from the collected data
+            id_frame2 = pd.DataFrame(df_list, columns=['Element', 'x', 'y', 'z'])
+
     else:
         ddict.printLog("The file is not in a known format. Use the help flag (-h) for more information")
         sys.exit()
-
-    # drop the label column from the dataframe, if it exists.
-    if 'Label' in id_frame.columns:
-        id_frame.drop(columns=['Label'], inplace=True)
-
 
     ddict.printLog('')
 
     # Check which atoms did not move, they should have the same x y z coordinates. Label them as True in the Struc column.
     id_frame['Struc'] = (id_frame['x'] == id_frame2['x']) & (id_frame['y'] == id_frame2['y']) & (id_frame['z'] == id_frame2['z'])
-
 
     # Write the box dimensions as a tuple.
     box_size=(simbox_x, simbox_y, simbox_z)
@@ -231,7 +234,7 @@ def minimum_image_distance(position1, position2, box_size) -> float:
     return np.linalg.norm(d_pos)
 
 # Function to identify molecular bonds from a distance search using a k-d tree.
-def identify_molecules_and_bonds(atoms, box_size, neglect_atoms = []) -> Tuple[list, list]:
+def identify_molecules_and_bonds(atoms, box_size, cutoff = 3.0) -> Tuple[list, list]:
 
     # Get the covalent radii 
     covalent_radii = ddict.dict_covalent()
@@ -239,19 +242,8 @@ def identify_molecules_and_bonds(atoms, box_size, neglect_atoms = []) -> Tuple[l
     # Define bond_distances
     bond_distances = {(e1, e2): (covalent_radii[e1] + covalent_radii[e2]) * 1.15 for e1 in covalent_radii for e2 in covalent_radii}
 
-    #If the neglect_atoms list is not empty, change the bond distance for every pair, where one of the atoms is in the neglect_atoms list to 0.0
-    if neglect_atoms:
-        for atom in neglect_atoms:
-            for element in covalent_radii:
-                bond_distances[(atom, element)] = 0.0
-                bond_distances[(element, atom)] = 0.0
-
-    
     # Create a graph with atoms as nodes and bonds as edges
-    simbox_G = nx.Graph()  
-
-    # Add all atoms as nodes to the graph
-    #simbox_G.add_nodes_from(range(len(atoms))) 
+    simbox_G = nx.Graph()    
 
     atom_positions = np.array([[atom['x'], atom['y'], atom['z']] for atom in atoms]) % box_size
     atom_elements = [atom['element'] for atom in atoms]
@@ -271,31 +263,15 @@ def identify_molecules_and_bonds(atoms, box_size, neglect_atoms = []) -> Tuple[l
         if distance <= bond_distance:
             # Add an edge in the graph if atoms are bonded
             simbox_G.add_edge(i, j)
-    # Now we need to set the atoms[i]['Atom'] column to the index of the atom in the graph.
-    # But save the original index in the atoms[i]['Index'] column.
-    for i in range(len(atoms)):
-        atoms[i]['Index'] = atoms[i]['Atom']
-        atoms[i]['Atom'] = i
-
 
     # Each connected component in the graph represents a molecule
     molecules = [[atoms[i]['Atom'] for i in molecule] for molecule in nx.connected_components(simbox_G)]
+
     # Determine bonds for each molecule
     molecule_bonds = []
     for molecule in molecules:
         bonds = [sorted((i, j)) for i, j in simbox_G.edges(molecule)]  # Only include bonds within the current molecule
         molecule_bonds.append(bonds)
-    
-    # rename the molecule_bond entries to the original atom index.
-    for i in range(len(molecule_bonds)):
-        for j in range(len(molecule_bonds[i])):
-            molecule_bonds[i][j][0] = atoms[molecule_bonds[i][j][0]]['Index']
-            molecule_bonds[i][j][1] = atoms[molecule_bonds[i][j][1]]['Index']
-
-    for i in range(len(molecules)):
-        for j in range(len(molecules[i])):
-            molecules[i][j] = atoms[molecules[i][j]]['Index']
- 
 
     return molecules, molecule_bonds
 
@@ -306,13 +282,8 @@ def structure_recognition(id_frame, box_size) -> Tuple[pd.DataFrame, list, list,
     # First make a new dataframe with just the structure atoms.
     id_frame["Molecule"] = None
     structure_frame = id_frame[id_frame['Struc'] == True]
-
-    # if the structure_frame is empty, then there are no structures in the simulation box.
-    if structure_frame.empty:
-        ddict.printLog("No structures were found in the simulation box. If there are structures, make sure they are not moving.")
-        sys.exit()
-
     #convert the first dataframe to a list of dictionaries. We also need to store the atom index.
+
     str_atom_list = []
     for index, row in structure_frame.iterrows():
         entry = {'Atom': index, 'element': str(row['Element']), 'x': float(row['x']), 'y': float(row['y']), 'z': float(row['z'])}
@@ -325,7 +296,6 @@ def structure_recognition(id_frame, box_size) -> Tuple[pd.DataFrame, list, list,
     for i, molecule in enumerate(molecules_struc):
         id_frame.loc[molecule, "Molecule"] = i + 1
         structure_frame.loc[molecule, "Molecule"] = i + 1
-    
 
     # Identify the wall and the pore
     CNTs = []
@@ -333,7 +303,6 @@ def structure_recognition(id_frame, box_size) -> Tuple[pd.DataFrame, list, list,
     Walls = []
     Walls_positions = []
     counter_wall = 0
-
     # Make a copy of the structure frame (to assure pandas treats it as a copy, not a view)
     structure_frame_copy = structure_frame.copy()
 
@@ -347,20 +316,6 @@ def structure_recognition(id_frame, box_size) -> Tuple[pd.DataFrame, list, list,
         z_max = structure_frame.loc[structure_frame['Molecule'] == i, 'z'].max()
         z_min = structure_frame.loc[structure_frame['Molecule'] == i, 'z'].min()
         if (x_max - x_min) > 1.0 and (y_max - y_min) > 1.0 and (z_max - z_min) > 1.0:
-            
-            #If the structure consists of Gold or silver atoms, it is a wall (with a certain thickness)
-            if structure_frame.loc[structure_frame['Molecule'] == i, 'Element'].isin(['Au', 'Ag']).any():
-                counter_wall += 1
-                ddict.printLog(f"Structure {i} is a wall, labeled Wall{counter_wall}\n")
-                structure_frame_copy.loc[structure_frame['Molecule'] == i, "Struc"] = f"Wall{counter_wall}"
-                Walls.append(f"Wall{counter_wall}")
-                # Get the z position of the wall (max and min)
-
-                Walls_positions.append(z_min)
-                continue
-
-
-
             counter_pore += 1
             ddict.printLog(f"Structure {i} is a pore, labeled Pore{counter_pore}\n")
 
@@ -368,16 +323,15 @@ def structure_recognition(id_frame, box_size) -> Tuple[pd.DataFrame, list, list,
             structure_frame_copy.loc[structure_frame['Molecule'] == i, "Struc"] = f"Pore{counter_pore}"
             CNTs.append(f"Pore{counter_pore}")
 
-        # If the difference in x, y and z is smaller than 1.0, it is a wall.
         elif (x_max - x_min) < 1.0 or (y_max - y_min) < 1.0 or (z_max - z_min) < 1.0:
             counter_wall += 1
             ddict.printLog(f"Structure {i} is a wall, labeled Wall{counter_wall}")
             if (x_max - x_min) < 1.0:
-                ddict.printLog(f"The wall extends in yz direction at x = {x_min:.2f} Ang.\n")
+                ddict.printLog(f"The wall extends in x direction at x = {x_min:.2f} Ang.\n")
             if (y_max - y_min) < 1.0:
-                ddict.printLog(f"The wall extends in xz direction at y = {y_min:.2f} Ang.\n")
+                ddict.printLog(f"The wall extends in y direction at y = {y_min:.2f} Ang.\n")
             if (z_max - z_min) < 1.0:
-                ddict.printLog(f"The wall extends in xy direction at z = {z_min:.2f} Ang.\n")
+                ddict.printLog(f"The wall extends in z direction at z = {z_min:.2f} Ang.\n")
                 Walls_positions.append(z_min)
             structure_frame_copy.loc[structure_frame['Molecule'] == i, "Struc"] = f"Wall{counter_wall}"
             Walls.append(f"Wall{counter_wall}")
@@ -458,10 +412,6 @@ def structure_recognition(id_frame, box_size) -> Tuple[pd.DataFrame, list, list,
         
         # Delete the xy_distance column again.
         id_frame.drop(columns=['xy_distance'], inplace=True)
-    
-    #check if there is a 'CNT' column in the dataframe (if there are CNTs present). If not, add an empty column.
-    if 'CNT' not in id_frame.columns:
-        id_frame['CNT'] = None
 
     return id_frame, min_z_pore, max_z_pore, length_pore, CNT_centers, tuberadii, CNT_volumes, CNT_atoms, Walls_positions
 
@@ -474,24 +424,8 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
         entry = {'Atom': index, 'element': str(row['Element']), 'x': float(row['x']), 'y': float(row['y']), 'z': float(row['z'])}
         str_liquid_list.append(entry)
 
-    # Reset atom numbering
-    number = 0
-    for atom in str_liquid_list:
-        atom['Atom'] = number
-        number += 1
-
-    exclude_atoms = ['Na', 'Zn', 'Li', 'D', 'X']
-    exclude_atom = 'n'
-    neglect_atoms = []
-
-    for atom in exclude_atoms:
-        if any(id_frame['Element'] == atom):
-            exclude_atom = str(ddict.get_input(f'Should {atom} atoms be excluded from the molecular recognition? [y/n]:  ', args, 'str'))
-            if exclude_atom == 'y':
-                neglect_atoms.append(atom)
-
     # Identify the molecules and the bonds
-    molecules, molecule_bonds = identify_molecules_and_bonds(str_liquid_list, box_size, neglect_atoms)
+    molecules, molecule_bonds = identify_molecules_and_bonds(str_liquid_list, box_size)
 
     # Translate the atom numbers in the molecules list of lists to the element symbols to a new list of lists.
     molecules_sym = []
@@ -512,15 +446,14 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
     # Add the molecule information to the dataframe
     for i, molecule in enumerate(molecules):
         id_frame.loc[molecule, "Molecule"] = 1 + i
-        molecule_counter = 1+i
 
+ 
     # Initialize label counter and molecule counter
     label_counter = 1
     molecule_counter = id_frame['Molecule'][0]
 
     # Save original index to a new column
     id_frame['original_index'] = id_frame.index
-
     # To make sure this works if the atoms are sorted by atom type and not molecule wise, we need to resort the dataframe by molecule number.
     id_frame = id_frame.sort_values(by = ['Molecule', 'original_index'])
 
@@ -540,14 +473,14 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
     # Finally revert the sorting of the dataframe to the original order.
     id_frame = id_frame.sort_values(by='original_index').drop(columns='original_index')
 
-    # Create a new dataframe for the molecules. 
+    # Create a new dataframe for each molecule. 
     molecule_frame = pd.DataFrame(columns = ['Molecule', 'Atoms', 'Bonds', 'Atoms_sym', 'Bonds_sym'])
     molecule_frame['Molecule'] = range(1, len(molecules) + 1)
     molecule_frame['Atoms'] = molecules
     molecule_frame['Bonds'] = molecule_bonds
     molecule_frame['Atoms_sym'] = molecules_sym
     molecule_frame['Bonds_sym'] = molecule_bonds_sym    
-    # Add another column with the Labels. We get the info by matching the atom numbers in the Atoms column with the row index in the id_frame dataframe.
+    # Add another column with the Labels. We get the info by matching the atom numbers in the Atoms column with the roq index in the id_frame dataframe.
     molecule_frame['Labels'] = molecule_frame['Atoms'].apply(lambda x: [id_frame['Label'][i] for i in x])
     # Sort the lists in the Bonds_sym column to prepare to check for duplicates
     molecule_frame['Bonds_sym'] = molecule_frame['Bonds_sym'].apply(lambda x: sorted(x))
@@ -563,14 +496,14 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
     # Now get the chemical formulas of the unique molecules by simply counting the number of atoms of each element in the Atoms_sym column
     unique_molecule_frame['Molecule'] = unique_molecule_frame['Atoms_sym'].apply(lambda x: "".join(f"{element}{count}" for element, count in Counter(x).items()))
 
+
     #Now adjust the labels in molecule_frame to include the molecule kind.
     for i, row in unique_molecule_frame.iterrows():
         for i2, row2 in molecule_frame.iterrows():
-            if sorted(row['Bonds_sym']) == sorted(row2['Bonds_sym']):
+            if sorted(row['Labels']) == sorted(row2['Labels']):
                 new_labels = [f"{label}_{i + 1}" for label in molecule_frame.loc[i2, 'Labels']]
                 molecule_frame.at[i2, 'Labels'] = new_labels
-                max_species = i + 1
-
+    
     # Change the Labels column in the id_frame dataframe to the new labels
     for i, row in molecule_frame.iterrows():
         id_frame.loc[row['Atoms'], 'Label'] = row['Labels']
@@ -580,29 +513,6 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
     # Remove the _1/2/3.. from the Labels column in the id_frame dataframe
     id_frame['Label'] = id_frame['Label'].str.split('_').str[0]
 
-    #finally identify which atoms in the id_frame are not identified yet (single atoms/ions). They have no entry in the Species column.
-    #all atom of the same element ('Element') column should have the same species ('Species') number. If not, they are assigned a new species number.
-    #loop thorough all elements in the id_frame, if they have None in the Species column, assign a new species number.
-    for element in id_frame['Element'].unique():
-        if id_frame[id_frame['Element'] == element]['Species'].isnull().any():
-            id_frame.loc[id_frame['Element'] == element, 'Species'] = int(max_species) + 1
-            max_species += 1
-            #add the info to the unique_molecule_frame dataframe
-            unique_molecule_frame.loc[len(unique_molecule_frame)] = [element,[unique_molecule_frame.index], None, [element], None, [f"{element}1"]]
-
-    id_frame['Species'] = id_frame['Species'].astype(int)
-
-    # add the molecule number to the id_frame dataframe if there is no molecule number yet. 
-    # identify the last molecule number in the id_frame dataframe
-    last_molecule_number = id_frame['Molecule'].max()
-    # now loop over all atoms in the id_frame dataframe, if there is no molecule number yet, assign the last_molecule_number + 1
-    for i, row in id_frame.iterrows():
-        if row['Molecule'] == None:
-            id_frame.at[i, 'Molecule'] = last_molecule_number + 1
-            last_molecule_number += 1
-            #aslo change the label to "'Element'1" for these atoms
-            id_frame.at[i, 'Label'] = f"{row['Element']}1"
-            
     # Count how often each individual molecule/species occurs in the system
     # make a new dataframe with the columns 'Species' and 'Atom_count' and 'Molecule_count'
     molecule_count = pd.DataFrame()
@@ -611,7 +521,7 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
     # Reset the index
     molecule_count.reset_index(inplace=True)
 
-    # Now 'Species' is no longer an index, so we can create the column
+    # Now 'Species' is no longer an index, so we can safely create the column
     molecule_count.rename(columns={'index': 'Species'}, inplace=True)
 
     #molecule_count = molecule_count.sort_values(by='Species')
@@ -620,41 +530,36 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
     # Now the number of molecules is the Atom_count divided by the number of atoms in each species. Therefore we need to get the number of atoms in each species. It is the length of the roe 'Atoms' in the unique_molecule_frame dataframe.
     molecule_count['Molecule_count'] = molecule_count['Atom_count'] / unique_molecule_frame['Atoms'].apply(len)
 
-    # Change the molecule count to integer values.
-    molecule_count['Molecule_count'] = molecule_count['Molecule_count'].astype(int)    
 
     # Set the index in the dataframes to +=1.
     unique_molecule_frame.index += 1
     molecule_count.index += 1
 
+
    # Print this information in a nice table
     table = PrettyTable()
     table.field_names = ["Species", "Chemical formula", "No. molecules", "No. atoms per molecule"]
-
     for i, row in unique_molecule_frame.iterrows():
         table.add_row([i, row['Molecule'], int(molecule_count['Molecule_count'][i]), len(row['Atoms'])])
 
     # Print the results
     ddict.printLog(" ")
     ddict.printLog(table)
+    
 
     for i, row in unique_molecule_frame.iterrows():
         # Create a new graph if the molecule is smaller than 50
-        if len(row['Atoms']) < 50 and len(row['Atoms']) > 1:
+        if len(row['Atoms']) < 50:
             mol = nx.Graph()
 
             # Combine atoms and labels into a dictionary
             atom_labels = dict(zip(row['Atoms'], row['Labels']))
 
             for atom, label in atom_labels.items():
-                dummy_symbol = re.findall('[A-Za-z]+', label)[0]
-                if dummy_symbol not in ['X', 'D']:  # Skip dummy atoms
-                    mol.add_node(atom, element=label)
+                mol.add_node(atom, element=label)
 
             for bond in row['Bonds']:
-                atom1, atom2 = bond
-                if atom1 in mol.nodes() and atom2 in mol.nodes():  # Only add bonds between existing atoms
-                    mol.add_edge(atom1, atom2)
+                mol.add_edge(*bond)
 
             rdkit_mol = Chem.RWMol()
 
@@ -674,8 +579,7 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
             for edge in mol.edges():
                 atom_idx1 = atom_mapping[edge[0]]
                 atom_idx2 = atom_mapping[edge[1]]
-                bond_type = Chem.BondType.SINGLE  # You might need to adjust this based on your data
-                rdkit_mol.AddBond(atom_idx1, atom_idx2, bond_type)
+                rdkit_mol.AddBond(atom_idx1, atom_idx2)
 
             # Generate a 2D depiction
             rdkit_mol.UpdatePropertyCache(strict=False)
@@ -685,9 +589,11 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
             drawer = Chem.Draw.rdMolDraw2D.MolDraw2DCairo(500, 500)
             opts = drawer.drawOptions()
 
+
             for i in range(rdkit_mol.GetNumAtoms()):
                 atom = rdkit_mol.GetAtomWithIdx(i)
                 opts.atomLabels[i] = atom.GetSymbol()
+
 
             drawer.DrawMolecule(rdkit_mol)
             drawer.FinishDrawing()
@@ -695,14 +601,11 @@ def molecule_recognition(id_frame, box_size) -> pd.DataFrame:
             # Give the image a unique name of the chemical formula, which is stored in the Molecule column in the unique_molecule_frame dataframe
             with open(f'{row["Molecule"]}.png', 'wb') as f:
                 f.write(drawer.GetDrawingText())
-            
-    # Now we add  back the excluded atoms
-    #id_frame = pd.concat([id_frame,excluded_atoms_df])
 
-    return id_frame, unique_molecule_frame
+    return id_frame
 
 # Edit a frame in pdb format.
-def pdb(frame, element_masses, id_frame) -> pd.DataFrame:
+def pdb(frame, element_masses, molecule_id) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     #drop the first and last line
     frame=frame.drop(frame.index[[0,len(frame) - 1]])
@@ -719,71 +622,46 @@ def pdb(frame, element_masses, id_frame) -> pd.DataFrame:
         split_frame['Charge'] = 0
     #drop label and count column
     split_frame=split_frame.drop(['Label', 'Count'], axis = 1)
-    
-    # Modify the 'Atom' column to contain the first character (and the second character if lowercase)
-    split_frame['Atom'] = split_frame['Atom'].apply(lambda x: x[0] + (x[1].lower() if len(x) > 1 and x[1].islower() else ''))
-
+    #In atom column, just keep the first character
+    split_frame['Atom'] = split_frame['Atom'].str[0]
     #Add a new column with the atomic mass of each atom.
     split_frame['Mass'] = split_frame['Atom'].map(element_masses)
-    split_frame.reset_index(drop=True, inplace=True)
+    #Add the molecule number to the frame       
+    split_frame['Molecule'] = molecule_id 
 
-    return split_frame
+    return frame, split_frame
     
 # Edit a frame in xyz format.
-def xyz(frame, element_masses, id_frame) -> pd.DataFrame:
+def xyz(frame, element_masses, molecule_id) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     #drop the first two lines
     frame=frame.drop(frame.index[[0,1]])
-
-    #Split the frame into columns and label them. Also reset the index                          
+    #Split the frame into columns and label them                              
     split_frame = frame[0].str.split(expand=True)                       
     split_frame.columns = ['Atom', 'X', 'Y', 'Z']
-    split_frame.reset_index(drop=True, inplace=True)
-    
-    # Modify the 'Atom' column to contain the first character (and the second character if lowercase)
-    split_frame['Atom'] = split_frame['Atom'].apply(lambda x: x[0] + (x[1].lower() if len(x) > 1 and x[1].islower() else ''))
-
     #Add a new column with the atomic mass of each atom.                          
     split_frame['Mass'] = split_frame['Atom'].map(element_masses)
+    #Add the molecule number to the frame       
+    split_frame['Molecule'] = molecule_id 
 
-    #now add the charge column of the id_frame to the split_frame
-    split_frame['Charge'] = id_frame['Charge']
-
-    return split_frame
+    return frame, split_frame
 
 # Edit a frame in lammps format.
-def lammpstrj(frame, element_masses, id_frame) -> pd.DataFrame:
+def lammpstrj(frame, element_masses, molecule_id) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
-    # Extract the header information
-    header_line = frame.iloc[8, 0].split()
-    headers = header_line[2:]
-
-    # Get the positions of the different columns
-    atom_id_pos = headers.index('id') 
-    atom_type_pos = headers.index('element') 
-    atom_x_pos = headers.index('xu') 
-    atom_y_pos = headers.index('yu') 
-    atom_z_pos = headers.index('zu') 
-    atom_mol_pos = headers.index('mol') if 'mol' in headers else None
-    atom_charge_pos = headers.index('q') if 'q' in headers else None
-
-    # Drop the first 9 lines
-    frame = frame.drop(frame.index[range(9)])
-                       
-    split_frame = frame[0].str.split(expand=True)       
-    split_frame.reset_index(drop=True, inplace=True)       
-
-    #Instead of making new columns, we just rename the old ones for Atom, x, y, and z
-    split_frame = split_frame.rename(columns={atom_type_pos: 'Atom', atom_x_pos: 'X', atom_y_pos: 'Y', atom_z_pos: 'Z'})
-
-    # Modify the 'Atom' column to contain the first character (and the second character if lowercase)
-    split_frame['Atom'] = split_frame['Atom'].apply(lambda x: x[0] + (x[1].lower() if len(x) > 1 and x[1].islower() else ''))
-
+    #drop the first nine lines
+    frame=frame.drop(frame.index[[0,1,2,3,4,5,6,7,8]])
+    #Split the frame into columns and label them                              
+    split_frame = frame[0].str.split(expand=True)                       
+    split_frame.columns = ['Atom Count', 'Atom', 'X', 'Y', 'Z']
+    #drop the Atom count column
+    split_frame=split_frame.drop(['Atom Count'], axis=1)
+    #In atom column, just keep the first character
+    split_frame['Atom'] = split_frame['Atom'].str[0]
     #Add a new column with the atomic mass of each atom.                          
     split_frame['Mass'] = split_frame['Atom'].map(element_masses)
+    #Add the molecule number to the frame       
+    split_frame['Molecule'] = molecule_id 
 
-    # if there are charges provided, add them to the dataframe as a new column.
-    if atom_charge_pos:
-        split_frame['Charge'] = split_frame[atom_charge_pos].astype(float)
+    return frame, split_frame
 
-    return split_frame
