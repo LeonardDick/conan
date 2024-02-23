@@ -258,9 +258,6 @@ def axial_density_prep(inputdict):
     return outputdict
 
 def axial_density_analysis(inputdict):  
-    
-    #wrap the coordinates
-    inputdict = wrapping_coordinates(inputdict)
 
     num_increments = inputdict['num_increments']
     max_z_pore = inputdict['max_z_pore']
@@ -274,6 +271,8 @@ def axial_density_analysis(inputdict):
     element_radii = inputdict['element_radii']
     maxdisp_atom_dist = inputdict['maxdisp_atom_dist']
     maxdisp_atom_row = inputdict['maxdisp_atom_row']
+
+    split_frame = wrapping_coordinates(inputdict['box_size'], split_frame)
 
     # For now we concentate the edges/bins (This has to be changed in the future for the analysis on multiple CNTs).
     z_bin_edges = np.ravel(z_bin_edges)
