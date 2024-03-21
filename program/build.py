@@ -209,7 +209,7 @@ def stacked_from_input() -> pd.DataFrame:
     # Now we identify all different molecules in the input file using the molecule recognition function from the traj_info module.
     # Set an arbitary box size of 1000 Ang.
     box_size=(1000, 1000, 1000)
-    positions = traj_info.molecule_recognition(positions, box_size)
+    positions, unique_molecule_frame = traj_info.molecule_recognition(positions, box_size)
 
     # Make a list of all different molecules.
     molecules = positions.iloc[:,4].unique()

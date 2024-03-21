@@ -137,7 +137,7 @@ def generating_pictures(id_frame, CNT_centers, box_size) -> None:
                 elif add_liquid2 == 2:
                     # Do the molecule recognition.
                     ddict.printLog('-> Molecule recognition.')
-                    id_frame = traj_info.molecule_recognition(id_frame, box_size)
+                    id_frame, unique_molecule_frame = traj_info.molecule_recognition(id_frame, box_size)
                     id_frame = id_frame.drop(['Charge', 'Label', 'CNT'], axis = 1)
                     # Add the Molecule column to the CNT_atoms_pic dataframe.
                     CNT_atoms_pic['Molecule'] = np.nan
