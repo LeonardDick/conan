@@ -278,6 +278,8 @@ def trajectory_analysis(id_frame, CNT_centers, box_size, tuberadii, min_z_pore, 
         from velocity import rad_velocity_analysis as analysis
         from velocity import rad_velocity_processing as post_processing
 
+    if analysis_choice2 == 9:
+        from center_M_ch import COM_calculation as analysis
 
 
     maxdisp_atom_dist = 0
@@ -329,6 +331,14 @@ def trajectory_analysis(id_frame, CNT_centers, box_size, tuberadii, min_z_pore, 
         regions[5] = float(ddict.get_input('Enter maximum z-value ', args, 'float'))
     maindict['regions'] = regions
 
+
+    analyzed_frames = 0  
+    counter = 0 
+
+    max_steps = int(ddict.get_input('How many frames should be analyzed? ', args, 'int'))
+    step_interval = int(ddict.get_input('Every (?)th step? ', args, 'int'))
+     
+
     # MAIN LOOP
     # Define which function to use reading the trajectory file. Pull definition from traj_info.py.
     if args["trajectoryfile"].endswith(".xyz"):
@@ -342,56 +352,65 @@ def trajectory_analysis(id_frame, CNT_centers, box_size, tuberadii, min_z_pore, 
     trajectory = pd.read_csv(args["trajectoryfile"], chunksize = number_of_lines_per_chunk, header = None)        
     chunk_number = 0
     # Loop over chunks.
-    for chunk in trajectory:    
-        chunk_number = chunk_number + 1
+    for chunk in trajectory:
+        chunk_number += 1
         maindict['chunk_number'] = chunk_number
-        print('')
-        print('Chunk %d of %d' % (chunk_number, number_of_chunks))
-        # Divide the chunk into individual frames. If the chunk is the last chunk, the number of frames is different.
-        if chunk.shape[0] == number_of_lines_last_chunk:                            
+        print('\nChunk %d of %d' % (chunk_number, number_of_chunks))
+
+        if chunk.shape[0] == number_of_lines_last_chunk:
             frames = np.split(chunk, last_chunk_size)
         else:
-            frames = np.split(chunk, chunk_size)           
+            frames = np.split(chunk, chunk_size)
 
         for frame in frames:
 
-            # First load the frame into the function run() to get a dataframe. Then reset the index.
-            split_frame = run(frame, element_masses, id_frame)
-            split_frame.reset_index(drop = True, inplace = True)
-            
-            # Add the necessary columns to the dataframe.
-            split_frame['Struc'] = molecule_structure
-            split_frame['Molecule'] = molecule_id
-            split_frame['Species'] = molecule_species
-            split_frame['Label'] = molecule_label 
+            #print the frame number
 
-            # Drop all CNT and carbon_wall atoms, just the Liquid atoms are needed for the analysis. 
-            split_frame = split_frame[split_frame['Struc'] == 'Liquid']
-            split_frame = split_frame.drop(['Struc'], axis = 1)
-      
-            # Drop the other atoms which are not needed for the analysis.
-            if analysis_spec_molecule == 'y':
-                split_frame = split_frame[split_frame['Species'].astype(int) == int(spec_molecule)]  
-                # If the spec_atom list does not contain "all" then only the atoms in the list are kept.
-                if spec_atom[0] != 'all':
-                    # If specific atoms are requested, only these atoms are kept.
-                    split_frame=split_frame[split_frame['Label'].isin(spec_atom)]
+            if analyzed_frames >= max_steps:
+                break  
+            if counter % step_interval == 0: 
+                print('Frame %d of %d' % (counter, number_of_frames), end = '\r')
+                # First load the frame into the function run() to get a dataframe. Then reset the index.
+                split_frame = run(frame, element_masses, id_frame)
+                split_frame.reset_index(drop = True, inplace = True)
                 
-            # Save the split_frame in maindict
-            maindict['split_frame'] = split_frame
-            maindict['counter'] = counter
+                # Add the necessary columns to the dataframe.
+                split_frame['Struc'] = molecule_structure
+                split_frame['Molecule'] = molecule_id
+                split_frame['Species'] = molecule_species
+                split_frame['Label'] = molecule_label 
 
-            maindict = analysis(maindict)
- 
-            counter += 1
-            print('Frame %d of %d' % (counter, number_of_frames), end = '\r')
+                # Drop all CNT and carbon_wall atoms, just the Liquid atoms are needed for the analysis. 
+                split_frame = split_frame[split_frame['Struc'] == 'Liquid']
+                split_frame = split_frame.drop(['Struc'], axis = 1)
+        
+                # Drop the other atoms which are not needed for the analysis.
+                if analysis_spec_molecule == 'y':
+                    split_frame = split_frame[split_frame['Species'].astype(int) == int(spec_molecule)]  
+                    # If the spec_atom list does not contain "all" then only the atoms in the list are kept.
+                    if spec_atom[0] != 'all':
+                        # If specific atoms are requested, only these atoms are kept.
+                        split_frame=split_frame[split_frame['Label'].isin(spec_atom)]
+                    
+                    # Save the split_frame in maindict
+                    maindict['split_frame'] = split_frame
+                    maindict['counter'] = counter
+
+                    maindict = analysis(maindict)
+
+                    print('Frame %d of %d' % (counter, number_of_frames), end = '\r')
+        
+                analyzed_frames += 1
+            counter += 1  
+        if analyzed_frames >= max_steps:
+            break  
 
         # For memory intensive analyses (e.g. CN) we need to do the processing after every chunk
         if analysis_choice2 == 5:
             maindict = chunk_processing(maindict)
                 
     ddict.printLog('')
-    ddict.printLog('Finished processing the trajectory. %d frames were processed.' % (counter))
+    ddict.printLog('Finished processing the trajectory. %d frames were processed.' % (analyzed_frames))
     ddict.printLog('')
 
     # DATA PROCESSING

@@ -1,0 +1,91 @@
+###########################################
+##                                       ##
+##   #####  #####  #   #  #####  #   #   ##
+##   #      #   #  ##  #  #   #  ##  #   ##
+##   #      #   #  # # #  #####  # # #   ##
+##   #      #   #  #  ##  #   #  #  ##   ##
+##   #####  #####  #   #  #   #  #   #   ##
+##                                       ##
+###########################################
+
+Find the documentation on the CONAn website: http://con-an.readthedocs.io
+If you use CONAN in your research, please cite the following paper:
+doi.org/10.1021/acs.jcim.3c01075
+
+Trajectory: ..\..\example_trajectories\traj.pdb
+
+
+The simulation box dimensions are [Ang]: 38.340 x 39.352 x 156.228
+
+Total number of atoms: 15492
+
+Structure 1 is a wall, labeled Wall1
+The wall extends in xy direction at z = 146.35 Ang.
+
+Structure 2 is a pore, labeled Pore1
+
+Structure 3 is a wall, labeled Wall2
+The wall extends in xy direction at z = 8.86 Ang.
+
+
+Total number of structures: 3
+Number of walls: 2
+Number of pores: 1
+
+The length of Pore1 is 41.30 Ang.
+The center of Pore1 is at (18.46, 19.06, 77.71) Ang.
+The radius of Pore1 is 4.70 Ang.
+The volume of Pore1 is 2862.87 Ang^3.
+
+(1) Produce xyz files of the simulation box or pore structure.
+(2) Analyze the trajectory.
+Picture or analysis mode?:  2
+
+ANALYSIS mode.
+
+(1) Calculate the radial density inside the CNT
+(2) Calculate the radial charge density inside the CNT (if charges are provided)
+(3) Calculate the accessibe volume of the CNT
+(4) Calculate the average density along the z axis of the simulation box
+(5) Calculate the coordination number of all species in the system
+(6) Calculate the distance between liquid and pore atoms
+(7) Calculate the three dimensional density distribution of the liquid in the simulation box
+(8) Calculate the velocity of the liquid inside the CNT
+Which analysis should be conducted?:   5
+
+ 
++---------+------------------+---------------+------------------------+
+| Species | Chemical formula | No. molecules | No. atoms per molecule |
++---------+------------------+---------------+------------------------+
+|    1    |     H15N2C8      |      400      |           25           |
+|    2    |      C1540       |       1       |          1540          |
+|    3    |       C576       |       2       |          576           |
+|    4    |      O2H3C2      |      400      |           7            |
++---------+------------------+---------------+------------------------+
+
+Do you want to perform the analysis for a specific molecule kind? (y/n)  n
+-> Reading the trajectory.
+
++------------+------------+-------------+
+|            | Trajectory |   Chunk(1)  |
++------------+------------+-------------+
+| Size in MB |    52.7    | 99.0 (52.7) |
+|   Frames   |     50     |    94(50)   |
+|   Lines    |   774700   |   1456436   |
++------------+------------+-------------+
+
+
+Do you want to perform a 3d analysis of the coordination number? [y/n] n
+Should the distance to a reference point (e.g. a Wall or CNT) be calculated? [y/n] y
+Should an existing structure be used as reference point? [y/n] y
+Do you want to calculte the coordination number only inside a pore? [y/n] y
+Up to which distance should the coordination number be calculated?  9.0
+Number of increments?  30
+Bin size:0.1619749949966406 Ang.
+
+Do you want the calculation to be performed in a specific region? [y/n]  n
+How many frames should be analyzed?  50
+Every (?)th step?  1
+
+Finished processing the trajectory. 10 frames were processed.
+
